@@ -1,0 +1,6 @@
+ # Game grid
+        self.grid_size = 4
+        self.mole_timer_interval = 1250  # milliseconds
+        self.mole_position = None
+
+        self.initUI()
