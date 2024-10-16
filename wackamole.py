@@ -1,70 +1,79 @@
 import sys
 import random
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QGridLayout, QMessageBox
 from PyQt5.QtCore import QTimer
 
-class WhackAMoleGame(QMainWindow):
+class WhackAMoleGame(QWidget):
     def __init__(self):
         super().__init__()
-
-        # Game settings
-        self.grid_size = 4
-        self.mole_timer_interval = 1000  # milliseconds
-        self.mole_position = None
-
         self.initUI()
+        self.score = 0
+        self.time_left = 30
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_timer)
+        self.timer.start(1000)  # Update every second
+
+        self.mole_buttons = []
+        self.setup_grid()
+        self.show_mole()
 
     def initUI(self):
-        self.setWindowTitle('Whack-a-Mole')
+        self.setWindowTitle('Whack-a-Mole Game')
         self.setGeometry(100, 100, 400, 400)
-
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
         
-        self.grid_layout = QGridLayout(self.central_widget)
-        self.buttons = []
+        self.layout = QVBoxLayout()
+        self.score_label = QLabel('Score: 0')
+        self.timer_label = QLabel('Time left: 30')
+        
+        self.layout.addWidget(self.score_label)
+        self.layout.addWidget(self.timer_label)
+        
+        self.grid_layout = QGridLayout()
+        self.layout.addLayout(self.grid_layout)
+        
+        self.setLayout(self.layout)
 
-        for i in range(self.grid_size):
-            row_buttons = []
-            for j in range(self.grid_size):
-                button = QPushButton(self)
-                button.setFixedSize(80, 80)
-                button.setStyleSheet("background-color: lightgray")
-                button.clicked.connect(self.buttonClicked)
+    def setup_grid(self):
+        for i in range(3):
+            row = []
+            for j in range(3):
+                button = QPushButton(' ')
+                button.setFixedSize(100, 100)
+                button.clicked.connect(self.whack_mole)
                 self.grid_layout.addWidget(button, i, j)
-                row_buttons.append(button)
-            self.buttons.append(row_buttons)
-        
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.showMole)
-        self.timer.start(self.mole_timer_interval)
+                row.append(button)
+            self.mole_buttons.append(row)
 
-    def showMole(self):
-        if self.mole_position:
-            # Hide the previous mole
-            row, col = self.mole_position
-            self.buttons[row][col].setStyleSheet("background-color: lightgray")
+    def show_mole(self):
+        # Hide all moles first
+        for row in self.mole_buttons:
+            for button in row:
+                button.setText(' ')
         
-        # Choose a new random position for the mole
-        self.mole_position = (random.randint(0, self.grid_size - 1), random.randint(0, self.grid_size - 1))
-        row, col = self.mole_position
-        self.buttons[row][col].setStyleSheet("background-color: red")
+        # Randomly select a button to be the mole
+        i, j = random.randint(0, 2), random.randint(0, 2)
+        self.mole_buttons[i][j].setText('Mole')
+        
+        # Schedule next mole appearance
+        QTimer.singleShot(1000, self.show_mole)  # Mole appears every second
 
-    def buttonClicked(self):
+    def whack_mole(self):
         sender = self.sender()
-        row, col = None, None
-        for r in range(self.grid_size):
-            if sender in self.buttons[r]:
-                row = r
-                col = self.buttons[r].index(sender)
-                break
+        if sender.text() == 'Mole':
+            self.score += 1
+            self.score_label.setText(f'Score: {self.score}')
+            sender.setText(' ')
+    
+    def update_timer(self):
+        self.time_left -= 1
+        self.timer_label.setText(f'Time left: {self.time_left}')
+        if self.time_left <= 0:
+            self.end_game()
 
-        if self.mole_position == (row, col):
-            self.buttons[row][col].setStyleSheet("background-color: lightgray")
-            self.mole_position = None
-            QMessageBox.information(self, "Whack-a-Mole", "Hit!")
-        else:
-            QMessageBox.warning(self, "Whack-a-Mole", "Miss!")
+    def end_game(self):
+        self.timer.stop()
+        QMessageBox.information(self, 'Game Over', f'Your final score is: {self.score}')
+        self.close()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
