@@ -1,0 +1,81 @@
+import sys
+import random
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QGridLayout, QMessageBox
+from PyQt5.QtCore import QTimer
+
+
+class WhackAMoleGame(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        self.score = 0
+        self.time_left = 30
+       class GameSettings(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+ def initUI(self):
+        self.setWindowTitle('Wack-a-Mole Game Settings')
+
+
+        # Create a label
+        self.label = QLabel('Select Game Length:', self)
+
+
+        # Create a combo box for selecting game length
+        self.comboBox = QComboBox(self)
+  # Add options from 15 to 60 seconds
+        self.comboBox.addItems([str(i) + ' seconds' for i in range(15, 61)])
+
+
+        # Create a button to start the game
+        self.startButton = QPushButton('Start Game', self)
+        self.startButton.clicked.connect(self.startGame)
+
+
+        # Set layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.comboBox)
+        layout.addWidget(self.startButton)
+
+
+        self.setLayout(layout)
+
+
+    def startGame(self):
+        # Get the selected game length
+        game_length = self.comboBox.currentText().split()[0]
+        QMessageBox.information(self, 'Game Started', f'Game will last for {game_length} seconds!')
+       
+        # Schedule next mole appearance
+        QTimer.singleShot(1000, self.show_mole)  # Mole appears every second
+
+
+    def whack_mole(self):
+        sender = self.sender()
+        if sender.text() == 'Mole':
+            self.score += 1
+            self.score_label.setText(f'Score: {self.score}')
+            sender.setText(' ')
+   
+    def update_timer(self):
+        self.time_left -= 1
+        self.timer_label.setText(f'Time left: {self.time_left}')
+        if self.time_left <= 0:
+
+self.end_game()
+
+
+    def end_game(self):
+        self.timer.stop()
+        QMessageBox.information(self, 'Game Over', f'Your final score is: {self.score}')
+        self.close()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    game = WhackAMoleGame()
+    game.show()
+    sys.exit(app.exec_())
